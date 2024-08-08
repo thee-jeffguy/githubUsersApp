@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../Presentation/Screens/splash_screen.dart';
-import '../Presentation/Screens/homepage_screen.dart';
+import 'domain/entities/user.dart';
+import 'presentation/Screens/user_profile.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,6 +20,8 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home:  const SplashScreen(),
+
+
 
     );
   }

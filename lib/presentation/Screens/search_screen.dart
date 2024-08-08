@@ -1,37 +1,25 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:test_drive/data/data_source/data_source.dart';
+import 'package:test_drive/data/repository/repository_impl.dart';
+import 'package:test_drive/domain/entities/user.dart';
+import 'package:test_drive/domain/usecases/get_user_details_usecase.dart';
+import '../providers/user_details_provider.dart';
+import 'user_profile.dart';
+import 'package:provider/provider.dart';
 
-import '../../Domain/entities/user.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Search Bar',
-      theme: ThemeData(
-        primarySwatch: Colors.grey,
-      ),
-      home: const HomePage(),
-    );
-  }
-}
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _HomeScreenState extends State<HomePage> {
+class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
+  final GetUserDetailsUsecase getUserDetails = GetUserDetailsUsecase(GitHubRepositoryImpl(GithubDataSource()));
 
   List<User> _searchResults = [];
 
@@ -47,8 +35,10 @@ class _HomeScreenState extends State<HomePage> {
       final items = (data['items'] as List).map((item) {
         return User(
           login: item['login'],
-          name: item['login'],  // Assuming the name is not available in the search results
+          name: item['login'],  // Use 'login' as a fallback for name
           avatarUrl: item['avatar_url'],
+          bio: '',
+          type: '', // Initialize as empty or fetch later
         );
       }).toList();
       setState(() {
@@ -61,6 +51,22 @@ class _HomeScreenState extends State<HomePage> {
     }
   }
 
+  void _getUserDetails(String login) {
+    final userDetailsProvider = Provider.of<UserDetailsProvider>(context, listen: false);
+    userDetailsProvider.getUserDetails(login).then((_) {
+      if (userDetailsProvider.userDetails != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => UserDetails(user:userDetailsProvider.userDetails!)),
+        );
+      } else if (userDetailsProvider.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load user details: ${userDetailsProvider.error}')),
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,7 +76,6 @@ class _HomeScreenState extends State<HomePage> {
           style: TextStyle(color: Colors.grey),
         ),
         backgroundColor: Colors.black,
-        foregroundColor: Colors.grey,
       ),
       body: Column(
         children: [
@@ -97,6 +102,9 @@ class _HomeScreenState extends State<HomePage> {
                   ),
                   title: Text(user.name),
                   subtitle: Text(user.login),
+                  onTap: () {
+                    _getUserDetails(user.login);
+                  },
                 );
               },
             ),

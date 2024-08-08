@@ -42,6 +42,7 @@ dependencies:
   equatable: ^2.0.5 #ability to compare objects
   dartz: ^0.10.1 #handle success/error state from data source
   http: ^1.2.2
+  provider: ^6.0.0
 
 
 dev_dependencies:

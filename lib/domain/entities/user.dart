@@ -1,9 +1,10 @@
+
 class User {
   final String login;
   final String name;
   final String avatarUrl;
-  String? followers;
-  String? following;
+  int? followers;
+  int? following;
   String? bio;
   String? type;
 
