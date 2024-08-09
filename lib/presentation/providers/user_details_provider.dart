@@ -1,7 +1,4 @@
 
-
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:test_drive/domain/entities/user.dart';
 import 'package:test_drive/domain/usecases/get_user_details_usecase.dart';

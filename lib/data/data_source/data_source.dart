@@ -22,21 +22,23 @@ import '../data_model/github_user_model.dart';
     }
   }
 
-  Future<GithubUserModel> getUserDetails(String? login) async{
+  Future<List<GithubUserModel>> getUserDetails(String? login) async{
     final url = Uri.parse('https://api.github.com/users/$login');
     final response = await http.get(url);
 
     if (response.statusCode == 200){
       final data = json.decode(response.body);
-      return GithubUserModel(
-        login: data['login'],
-        name: data['name'],
-        avatarUrl: data['avatar_url'],
-        followers: data['followers'],
-        following: data['following'],
-        bio: data['bio'],
-        type: data['type'],
-      );
+      return (data['items'] as List)
+          .map((item) => GithubUserModel.fromJson(item))
+          .toList();
+        // login: data['login'],
+        // name: data['name'],
+        // avatarUrl: data['avatar_url'],
+        // followers: data['followers'],
+        // following: data['following'],
+        // bio: data['bio'],
+        // type: data['type'],
+      // );
     }else {
       throw Exception('Failed to load user details');
     }
