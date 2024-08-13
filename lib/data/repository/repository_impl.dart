@@ -21,6 +21,12 @@ class GitHubRepositoryImpl implements UserRepository{
   }
 
   @override
+  Future<List<User>> searchUsersByUsername(String? username, int page) async {
+    final users = await remoteGithubDataSource.searchUsersByUsername(username, page);
+    return users.map((user) => user.toEntity()).toList();
+  }
+
+  @override
   Future<User> getUserDetails(String? login) async{
     final userDetails = await remoteGithubDataSource.getUserDetails(login);
     return userDetails.toEntity();

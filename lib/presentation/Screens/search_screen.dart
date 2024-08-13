@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:test_drive/data/data_source/data_source.dart';
-import 'package:test_drive/data/repository/repository_impl.dart';
-import 'package:test_drive/domain/entities/user.dart';
-import 'package:test_drive/domain/usecases/get_user_details_usecase.dart';
+import 'package:provider/provider.dart';
+import 'package:test_drive/presentation/providers/user_provider.dart';
 import '../providers/user_details_provider.dart';
 import 'user_profile.dart';
-import 'package:provider/provider.dart';
-
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,100 +12,120 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final TextEditingController _searchController = TextEditingController();
-  final GetUserDetailsUsecase getUserDetails = GetUserDetailsUsecase(GitHubRepositoryImpl(GithubDataSource()));
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
 
-  List<User> _searchResults = [];
+  @override
+  void initState() {
+    super.initState();
+    _locationController.addListener(() {
+      if (_locationController.text.isNotEmpty) {
+        _searchByLocation();
+      }
+    });
 
-  Future<void> _search() async {
-    final query = _searchController.text;
-    if (query.isEmpty) return;
-
-    final url = Uri.parse('https://api.github.com/search/users?q=location:$query');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final items = (data['items'] as List).map((item) {
-        return User(
-          login: item['login'],
-          name: item['login'],  // Use 'login' as a fallback for name
-          avatarUrl: item['avatar_url'],
-          bio: '',
-          type: '', // Initialize as empty or fetch later
-        );
-      }).toList();
-      setState(() {
-        _searchResults = items;
-      });
-    } else {
-      setState(() {
-        _searchResults = [];
-      });
-    }
-  }
-
-  void _getUserDetails(String login) {
-    final userDetailsProvider = Provider.of<UserDetailsProvider>(context, listen: false);
-    userDetailsProvider.getUserDetails(login).then((_) {
-      if (userDetailsProvider.userDetails != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => UserDetails(user:userDetailsProvider.userDetails!)),
-        );
-      } else if (userDetailsProvider.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load user details: ${userDetailsProvider.error}')),
-        );
+    _usernameController.addListener(() {
+      if (_usernameController.text.isNotEmpty) {
+        _searchByUsername();
       }
     });
   }
 
+  Future<void> _searchByLocation() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.getUsers(_locationController.text, 1);
+  }
+
+  Future<void> _searchByUsername() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.searchUsersByUsername(_usernameController.text, 1);
+  }
+
+  void _getUserDetails(String login) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => UserDetailsPage(login: login),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final users = userProvider.users;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Search GitHub Users',
-          style: TextStyle(color: Colors.grey),
-        ),
+        title: const Text('GitHub Users App'),
         backgroundColor: Colors.black,
+        foregroundColor: Colors.grey.shade200,
       ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
-              controller: _searchController,
+              controller: _locationController,
               decoration: const InputDecoration(
                 hintText: 'Search by location',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.search),
               ),
-              onSubmitted: (_) => _search(),
+              onSubmitted: (_) => _searchByLocation(),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _usernameController,
+              decoration: const InputDecoration(
+                hintText: 'Search by username',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.search),
+              ),
+              onSubmitted: (_) => _searchByUsername(),
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: _searchResults.length,
-              itemBuilder: (context, index) {
-                final user = _searchResults[index];
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage(user.avatarUrl),
-                  ),
-                  title: Text(user.name),
-                  subtitle: Text(user.login),
-                  onTap: () {
-                    _getUserDetails(user.login);
-                  },
-                );
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (ScrollNotification scrollInfo) {
+                if (scrollInfo.metrics.pixels ==
+                    scrollInfo.metrics.maxScrollExtent &&
+                    userProvider.hasMore) {
+                  if (_locationController.text.isNotEmpty) {
+                    userProvider.loadMoreUsers(_locationController.text);
+                  } else if (_usernameController.text.isNotEmpty) {
+                    userProvider.loadMoreUsersByUsername(_usernameController.text);
+                  }
+                }
+                return true;
               },
+              child: ListView.builder(
+                itemCount:
+                users.length + (userProvider.isLoadingMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == users.length && userProvider.isLoadingMore) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  final user = users[index];
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: NetworkImage(user.avatarUrl),
+                    ),
+                    title: Text(user.name ?? ''),
+                    subtitle: Text(user.login),
+                    onTap: () {
+                      _getUserDetails(user.login);
+                    },
+                  );
+                },
+              ),
             ),
           ),
         ],
       ),
-      backgroundColor: Colors.grey,
+      backgroundColor: Colors.grey.shade200,
     );
   }
 }

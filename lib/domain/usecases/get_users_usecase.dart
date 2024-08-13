@@ -7,6 +7,6 @@ class GetUsersUsecase{
   GetUsersUsecase({required this.repository});
 
   Future<List<User>> execute(String? location, int page) {
-    return repository.getUsers(location, page);
+    return  repository.getUsers(location, page);
   }
 }
