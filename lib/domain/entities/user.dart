@@ -2,10 +2,10 @@ class User {
   final String login;
   final String name;
   final String avatarUrl;
-  String? followers;
-  String? following;
-  String? bio;
-  String? type;
+  final int? followers;
+  final int? following;
+  final String? bio;
+  final String? type;
 
   User({
     required this.login,

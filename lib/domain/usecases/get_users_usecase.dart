@@ -1,12 +1,12 @@
 import '../entities/user.dart';
 import '../repositories/user_repository.dart';
 
-class GetUserDetailsUsecase{
+class GetUsersUsecase{
   final UserRepository repository;
 
-  GetUserDetailsUsecase({required this.repository});
+  GetUsersUsecase({required this.repository});
 
   Future<List<User>> execute(String? location, int page) {
-    return repository.getUserDetails(location, page);
+    return  repository.getUsers(location, page);
   }
 }
