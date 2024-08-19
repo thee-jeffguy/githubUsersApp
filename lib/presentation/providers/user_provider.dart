@@ -51,7 +51,7 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> loadMoreUsers(String? location) async {
-    if (_isLoadingMore || !_hasMore) return; // Prevent multiple requests
+    if (_isLoadingMore || !_hasMore) return;
 
     _isLoadingMore = true;
     notifyListeners();
@@ -89,7 +89,7 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> loadMoreUsersByUsername(String? username) async {
-    if (_isLoadingMore || !_hasMore) return; // Prevent multiple requests
+    if (_isLoadingMore || !_hasMore) return;
 
     _isLoadingMore = true;
     notifyListeners();

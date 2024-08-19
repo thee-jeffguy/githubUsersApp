@@ -6,6 +6,7 @@ class User {
   final int? following;
   final String? bio;
   final String? type;
+  final String? htmlUrl;
 
   User({
     required this.login,
@@ -15,5 +16,6 @@ class User {
     this.following,
     this.bio,
     this.type,
+    this.htmlUrl,
   });
 }

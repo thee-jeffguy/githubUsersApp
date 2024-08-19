@@ -14,21 +14,35 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
+  bool _isSearchingByLocation = true;
 
   @override
   void initState() {
     super.initState();
+
+
+    _loadDefaultUsers();
+
     _locationController.addListener(() {
       if (_locationController.text.isNotEmpty) {
+        _isSearchingByLocation = true;
+        _usernameController.clear();
         _searchByLocation();
       }
     });
 
     _usernameController.addListener(() {
       if (_usernameController.text.isNotEmpty) {
+        _isSearchingByLocation = false;
+        _locationController.clear();
         _searchByUsername();
       }
     });
+  }
+
+  Future<void> _loadDefaultUsers() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.getUsers('', 1);
   }
 
   Future<void> _searchByLocation() async {
@@ -89,18 +103,17 @@ class _HomePageState extends State<HomePage> {
               onNotification: (ScrollNotification scrollInfo) {
                 if (scrollInfo.metrics.pixels ==
                     scrollInfo.metrics.maxScrollExtent &&
-                    userProvider.hasMore) {
-                  if (_locationController.text.isNotEmpty) {
+                    !userProvider.isLoadingMore) {
+                  if (_isSearchingByLocation) {
                     userProvider.loadMoreUsers(_locationController.text);
-                  } else if (_usernameController.text.isNotEmpty) {
+                  } else {
                     userProvider.loadMoreUsersByUsername(_usernameController.text);
                   }
                 }
                 return true;
               },
               child: ListView.builder(
-                itemCount:
-                users.length + (userProvider.isLoadingMore ? 1 : 0),
+                itemCount: users.length + (userProvider.isLoadingMore ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == users.length && userProvider.isLoadingMore) {
                     return const Center(
@@ -109,15 +122,17 @@ class _HomePageState extends State<HomePage> {
                   }
 
                   final user = users[index];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: NetworkImage(user.avatarUrl),
+
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                    child: ListTile(
+                      onTap: () => _getUserDetails(user.login),
+                      leading: CircleAvatar(
+                        backgroundImage: NetworkImage(user.avatarUrl),
+                      ),
+                      title: Text(user.name ?? ''),
+                      subtitle: Text(user.login),
                     ),
-                    title: Text(user.name ?? ''),
-                    subtitle: Text(user.login),
-                    onTap: () {
-                      _getUserDetails(user.login);
-                    },
                   );
                 },
               ),
