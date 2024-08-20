@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:test_drive/Presentation/providers/connectivity_provider.dart';
 import 'package:test_drive/domain/usecases/search_by_username_usecase.dart';
 import 'package:test_drive/presentation/providers/user_provider.dart';
 import 'package:test_drive/presentation/providers/user_details_provider.dart';
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => UserProvider(
             GetUsersUsecase(repository: repository),
-            SearchUsersByUsernameUsecase(repository), // Pass the repository as a positional argument
+            SearchUsersByUsernameUsecase(repository),
           ),
         ),
         ChangeNotifierProvider(
@@ -36,6 +37,7 @@ class MyApp extends StatelessWidget {
             GetUserDetailsUsecase(repository),
           ),
         ),
+        ChangeNotifierProvider(create: (_) => InternetConnectionProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

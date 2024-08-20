@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:test_drive/presentation/providers/user_provider.dart';
 import '../providers/user_details_provider.dart';
 import 'user_profile.dart';
+import '../providers/connectivity_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -38,21 +39,63 @@ class _HomePageState extends State<HomePage> {
         _searchByUsername();
       }
     });
+
+    Provider.of<InternetConnectionProvider>(context, listen: false)
+    .addListener(_onConnectivityChange);
+  }
+
+  @override
+  void dispose() {
+    Provider.of<InternetConnectionProvider>(context, listen: false)
+        .removeListener(_onConnectivityChange);
+    super.dispose();
+  }
+
+  void _onConnectivityChange() {
+    final internetProvider = Provider.of<InternetConnectionProvider>(context, listen: false);
+    if (!internetProvider.isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No internet connection')),
+      );
+    }
   }
 
   Future<void> _loadDefaultUsers() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    await userProvider.getUsers('', 1);
+    final internetProvider = Provider.of<InternetConnectionProvider>(context, listen: false);
+
+    if (await internetProvider.hasInternetConnection()) {
+      await userProvider.getUsers('', 1);
+  } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Internet connection lost')),
+      );
+    }
   }
 
   Future<void> _searchByLocation() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final internetProvider = Provider.of<InternetConnectionProvider>(context, listen: false);
+
+    if(await internetProvider.hasInternetConnection()) {
     await userProvider.getUsers(_locationController.text, 1);
+  } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No internet connection')),
+      );
+    }
   }
+
 
   Future<void> _searchByUsername() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    await userProvider.searchUsersByUsername(_usernameController.text, 1);
+    final internetProvider = Provider.of<InternetConnectionProvider>(
+        context, listen: false);
+
+    if (await internetProvider.hasInternetConnection()) {
+      await userProvider.searchUsersByUsername(_usernameController.text, 1);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection')),
+      );
+    }
   }
 
   void _getUserDetails(String login) {
@@ -101,8 +144,8 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: NotificationListener<ScrollNotification>(
               onNotification: (ScrollNotification scrollInfo) {
-                if (scrollInfo.metrics.pixels ==
-                    scrollInfo.metrics.maxScrollExtent &&
+                if (scrollInfo.metrics.pixels >=
+                    scrollInfo.metrics.maxScrollExtent * 0.9 &&
                     !userProvider.isLoadingMore) {
                   if (_isSearchingByLocation) {
                     userProvider.loadMoreUsers(_locationController.text);

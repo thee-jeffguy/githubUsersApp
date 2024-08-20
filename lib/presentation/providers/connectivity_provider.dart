@@ -26,7 +26,6 @@ class InternetConnectionProvider with ChangeNotifier {
     }
   }
 
-  // New method to check internet connectivity
   Future<bool> hasInternetConnection() async {
     return _isConnected;
   }
