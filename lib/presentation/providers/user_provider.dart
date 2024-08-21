@@ -20,6 +20,15 @@ class UserProvider extends ChangeNotifier {
   bool get hasMore => _hasMore;
   bool get isLoading => _isLoading;
 
+  void resetSearchState() {
+    _users = [];
+    _currentPage = 1;
+    _isLoadingMore = false;
+    _hasMore = true;
+    _isLoading = false;
+    notifyListeners();
+  }
+
   Future<void> getUsers(String? location, int page) async {
     try {
       final fetchedUsers = await getUsersUsecase.execute(location, page);

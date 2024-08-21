@@ -20,8 +20,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-
-
     _loadDefaultUsers();
 
     _locationController.addListener(() {
@@ -41,55 +39,64 @@ class _HomePageState extends State<HomePage> {
     });
 
     Provider.of<InternetConnectionProvider>(context, listen: false)
-    .addListener(_onConnectivityChange);
+        .addListener(_onConnectivityChange);
   }
 
   @override
   void dispose() {
+    _locationController.dispose();
+    _usernameController.dispose();
     Provider.of<InternetConnectionProvider>(context, listen: false)
         .removeListener(_onConnectivityChange);
     super.dispose();
   }
 
   void _onConnectivityChange() {
-    final internetProvider = Provider.of<InternetConnectionProvider>(context, listen: false);
+    final internetProvider =
+    Provider.of<InternetConnectionProvider>(context, listen: false);
     if (!internetProvider.isConnected) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No internet connection')),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection')),
       );
     }
   }
 
   Future<void> _loadDefaultUsers() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final internetProvider = Provider.of<InternetConnectionProvider>(context, listen: false);
+    final internetProvider =
+    Provider.of<InternetConnectionProvider>(context, listen: false);
 
     if (await internetProvider.hasInternetConnection()) {
       await userProvider.getUsers('', 1);
-  } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Internet connection lost')),
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Internet connection lost')),
       );
     }
   }
 
   Future<void> _searchByLocation() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final internetProvider = Provider.of<InternetConnectionProvider>(context, listen: false);
+    final internetProvider =
+    Provider.of<InternetConnectionProvider>(context, listen: false);
 
-    if(await internetProvider.hasInternetConnection()) {
-    await userProvider.getUsers(_locationController.text, 1);
-  } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No internet connection')),
+    if (await internetProvider.hasInternetConnection()) {
+      userProvider.resetSearchState();
+      await userProvider.getUsers(_locationController.text, 1);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection')),
       );
     }
   }
 
-
   Future<void> _searchByUsername() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final internetProvider = Provider.of<InternetConnectionProvider>(
-        context, listen: false);
+    final internetProvider =
+    Provider.of<InternetConnectionProvider>(context, listen: false);
 
     if (await internetProvider.hasInternetConnection()) {
+      userProvider.resetSearchState();
       await userProvider.searchUsersByUsername(_usernameController.text, 1);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -145,12 +152,14 @@ class _HomePageState extends State<HomePage> {
             child: NotificationListener<ScrollNotification>(
               onNotification: (ScrollNotification scrollInfo) {
                 if (scrollInfo.metrics.pixels >=
-                    scrollInfo.metrics.maxScrollExtent * 0.9 &&
-                    !userProvider.isLoadingMore) {
+                    scrollInfo.metrics.maxScrollExtent &&
+                    !userProvider.isLoadingMore &&
+                    userProvider.hasMore) {
                   if (_isSearchingByLocation) {
                     userProvider.loadMoreUsers(_locationController.text);
                   } else {
-                    userProvider.loadMoreUsersByUsername(_usernameController.text);
+                    userProvider.loadMoreUsersByUsername(
+                        _usernameController.text);
                   }
                 }
                 return true;
@@ -167,7 +176,8 @@ class _HomePageState extends State<HomePage> {
                   final user = users[index];
 
                   return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                    margin: const EdgeInsets.symmetric(
+                        vertical: 8.0, horizontal: 16.0),
                     child: ListTile(
                       onTap: () => _getUserDetails(user.login),
                       leading: CircleAvatar(
