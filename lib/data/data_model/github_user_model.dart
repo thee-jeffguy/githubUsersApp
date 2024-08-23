@@ -1,6 +1,11 @@
 import 'dart:convert';
 
 import '../../domain/entities/user.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+part 'github_user_model.g.dart';
+
+@JsonSerializable()
 
 class GithubUserModel extends User {
   GithubUserModel({
@@ -23,13 +28,13 @@ class GithubUserModel extends User {
 
   factory GithubUserModel.fromJson(Map<String, dynamic> json) {
     return GithubUserModel(
-      login: json['login'] ?? '',  // Ensuring login is never null
-      avatarUrl: json['avatar_url'] ?? '',  // Using the correct JSON key for avatar URL
-      name: json['name'],  // Name can be null, handled in the constructor
-      followers: json['followers'],  // Followers can be null, handled in the constructor
-      following: json['following'],  // Following can be null, handled in the constructor
-      bio: json['bio'],  // Bio can be null, handled in the constructor
-      type: json['type'],  // Type can be null, handled in the constructor
+      login: json['login'] ?? '',
+      avatarUrl: json['avatar_url'] ?? '',
+      name: json['name'],
+      followers: json['followers'],
+      following: json['following'],
+      bio: json['bio'],
+      type: json['type'],
     );
   }
 
