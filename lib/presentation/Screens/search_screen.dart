@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:test_drive/presentation/providers/user_provider.dart';
 import '../providers/user_details_provider.dart';
 import 'user_profile.dart';
+import '../providers/connectivity_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,31 +15,94 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
+  bool _isSearchingByLocation = true;
 
   @override
   void initState() {
     super.initState();
+    _loadDefaultUsers();
+
     _locationController.addListener(() {
       if (_locationController.text.isNotEmpty) {
+        _isSearchingByLocation = true;
+        _usernameController.clear();
         _searchByLocation();
       }
     });
 
     _usernameController.addListener(() {
       if (_usernameController.text.isNotEmpty) {
+        _isSearchingByLocation = false;
+        _locationController.clear();
         _searchByUsername();
       }
     });
+
+    Provider.of<InternetConnectionProvider>(context, listen: false)
+        .addListener(_onConnectivityChange);
+  }
+
+  @override
+  void dispose() {
+    _locationController.dispose();
+    _usernameController.dispose();
+    Provider.of<InternetConnectionProvider>(context, listen: false)
+        .removeListener(_onConnectivityChange);
+    super.dispose();
+  }
+
+  void _onConnectivityChange() {
+    final internetProvider =
+    Provider.of<InternetConnectionProvider>(context, listen: false);
+    if (!internetProvider.isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection')),
+      );
+    }
+  }
+
+  Future<void> _loadDefaultUsers() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final internetProvider =
+    Provider.of<InternetConnectionProvider>(context, listen: false);
+
+    if (await internetProvider.hasInternetConnection()) {
+      await userProvider.getUsers('', 1);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Internet connection lost')),
+      );
+    }
   }
 
   Future<void> _searchByLocation() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    await userProvider.getUsers(_locationController.text, 1);
+    final internetProvider =
+    Provider.of<InternetConnectionProvider>(context, listen: false);
+
+    if (await internetProvider.hasInternetConnection()) {
+      userProvider.resetSearchState();
+      await userProvider.getUsers(_locationController.text, 1);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection')),
+      );
+    }
   }
 
   Future<void> _searchByUsername() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    await userProvider.searchUsersByUsername(_usernameController.text, 1);
+    final internetProvider =
+    Provider.of<InternetConnectionProvider>(context, listen: false);
+
+    if (await internetProvider.hasInternetConnection()) {
+      userProvider.resetSearchState();
+      await userProvider.searchUsersByUsername(_usernameController.text, 1);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No internet connection')),
+      );
+    }
   }
 
   void _getUserDetails(String login) {
@@ -87,20 +151,21 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: NotificationListener<ScrollNotification>(
               onNotification: (ScrollNotification scrollInfo) {
-                if (scrollInfo.metrics.pixels ==
+                if (scrollInfo.metrics.pixels >=
                     scrollInfo.metrics.maxScrollExtent &&
+                    !userProvider.isLoadingMore &&
                     userProvider.hasMore) {
-                  if (_locationController.text.isNotEmpty) {
+                  if (_isSearchingByLocation) {
                     userProvider.loadMoreUsers(_locationController.text);
-                  } else if (_usernameController.text.isNotEmpty) {
-                    userProvider.loadMoreUsersByUsername(_usernameController.text);
+                  } else {
+                    userProvider.loadMoreUsersByUsername(
+                        _usernameController.text);
                   }
                 }
                 return true;
               },
               child: ListView.builder(
-                itemCount:
-                users.length + (userProvider.isLoadingMore ? 1 : 0),
+                itemCount: users.length + (userProvider.isLoadingMore ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == users.length && userProvider.isLoadingMore) {
                     return const Center(
@@ -109,15 +174,18 @@ class _HomePageState extends State<HomePage> {
                   }
 
                   final user = users[index];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: NetworkImage(user.avatarUrl),
+
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                        vertical: 8.0, horizontal: 16.0),
+                    child: ListTile(
+                      onTap: () => _getUserDetails(user.login),
+                      leading: CircleAvatar(
+                        backgroundImage: NetworkImage(user.avatarUrl),
+                      ),
+                      title: Text(user.name ?? ''),
+                      subtitle: Text(user.login),
                     ),
-                    title: Text(user.name ?? ''),
-                    subtitle: Text(user.login),
-                    onTap: () {
-                      _getUserDetails(user.login);
-                    },
                   );
                 },
               ),

@@ -12,7 +12,7 @@ import '../data_model/github_user_model.dart';
 
      String url = "$baseUrl$locationPart$pagePart";
 
-     // Make sure the URL is not null or empty before making the request
+
      if (url.isEmpty) {
        throw Exception('URL cannot be null or empty');
      }

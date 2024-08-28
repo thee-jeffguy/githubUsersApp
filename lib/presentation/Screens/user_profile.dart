@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/usecases/get_user_details_usecase.dart';
 import '../../data/repository/repository_impl.dart';
@@ -25,13 +26,34 @@ class UserDetailsPage extends StatelessWidget {
     }
   }
 
+  void _shareUserProfile(User user) {
+    final profileUrl = 'https://github.com/${user.login}';
+    final shareText = 'Check out this GitHub user: ${user.name ?? user.login}\n$profileUrl';
+    Share.share(shareText);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Details'),
+        title: Text(login),  // Display the username in the app bar
         backgroundColor: Colors.black,
         foregroundColor: Colors.grey.shade200,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: () async {
+              final user = await _fetchUserDetails(login);
+              if (user != null) {
+                _shareUserProfile(user);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Failed to load user details.')),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<User?>(
         future: _fetchUserDetails(login),
@@ -50,7 +72,7 @@ class UserDetailsPage extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     backgroundImage: NetworkImage(user.avatarUrl),
-                    radius: 60,
+                    radius: 80,
                   ),
                   const SizedBox(height: 20),
                   Text(user.name ?? '', style: const TextStyle(fontSize: 20)),
