@@ -10,6 +10,8 @@ import '../Presentation/Screens/splash_screen.dart';
 import 'data/data_source/data_source.dart';
 import 'data/repository/repository_impl.dart';
 import 'package:http/http.dart' as http;
+import 'domain/usecases/get_followers_usecase.dart';
+import 'domain/usecases/get_following_usecase.dart';
 import 'domain/usecases/get_user_details_usecase.dart';
 import 'domain/usecases/get_users_usecase.dart';
 
@@ -27,7 +29,7 @@ void setupDependencies(){
   getIt.registerLazySingleton<GetUsersUsecase>(() => GetUsersUsecase(repository: getIt<UserRepository>()));
   getIt.registerLazySingleton<GetUserDetailsUsecase>(() => GetUserDetailsUsecase(getIt<UserRepository>()));
   getIt.registerLazySingleton<SearchUsersByUsernameUsecase>(() => SearchUsersByUsernameUsecase(getIt<UserRepository>()));
-  getIt.registerFactory<UserProvider>(() => UserProvider(getIt<GetUsersUsecase>(), getIt<SearchUsersByUsernameUsecase>()));
+  getIt.registerFactory<UserProvider>(() => UserProvider(getIt<GetUsersUsecase>(), getIt<SearchUsersByUsernameUsecase>(),getIt<GetFollowersUsecase>(),getIt<GetFollowingUsecase>()));
   getIt.registerFactory<UserDetailsProvider>(() => UserDetailsProvider(getIt<GetUserDetailsUsecase>()));
   getIt.registerFactory<InternetConnectionProvider>(() => InternetConnectionProvider());
 
@@ -48,6 +50,8 @@ class MyApp extends StatelessWidget {
           create: (_) => UserProvider(
             GetUsersUsecase(repository: repository),
             SearchUsersByUsernameUsecase(repository),
+            GetFollowersUsecase(repository),
+            GetFollowingUsecase(repository),
           ),
         ),
         ChangeNotifierProvider(

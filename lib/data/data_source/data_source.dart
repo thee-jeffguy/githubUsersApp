@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:test_drive/domain/entities/user.dart';
 import '../data_model/github_user_model.dart';
 
  class GithubDataSource{
    Future<List<GithubUserModel>> fetchUsers(String? location, int? page) async {
      // Ensure that location and page are properly handled
      String baseUrl = "https://api.github.com/search/users?q=location:";
-     String locationPart = location != null ? location : "";
+     String locationPart = location ?? "";
      String pagePart = (page != null && page > 0) ? "&page=$page" : "";
 
      String url = "$baseUrl$locationPart$pagePart";
@@ -63,4 +62,37 @@ import '../data_model/github_user_model.dart';
        throw Exception('Failed to search users by username');
      }
    }
+
+
+   Future<List<GithubUserModel>> getFollowers(String username) async {
+     final response = await client.get(
+       Uri.parse('https://api.github.com/users/$username/followers'),
+       headers: {'Accept': 'application/vnd.github.v3+json'},
+     );
+
+     if (response.statusCode == 200) {
+       final List<dynamic> data = json.decode(response.body);
+       return data.map((user) => GithubUserModel.fromJson(user)).toList();
+     } else {
+       throw Exception('Failed to load Followers'); // Handle errors
+     }
+   }
+
+   Future<List<GithubUserModel>> getFollowing(String username) async {
+     final response = await client.get(
+       Uri.parse('https://api.github.com/users/$username/following'),
+       headers: {'Accept': 'application/vnd.github.v3+json'},
+     );
+
+     if (response.statusCode == 200) {
+       final List<dynamic> data = json.decode(response.body);
+       return data.map((user) => GithubUserModel.fromJson(user)).toList();
+     } else {
+       throw Exception('Failed to load Following'); // Handle errors
+     }
+   }
  }
+
+
+
+

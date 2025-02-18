@@ -31,4 +31,18 @@ class GitHubRepositoryImpl implements UserRepository{
     final userDetails = await remoteGithubDataSource.getUserDetails(login);
     return userDetails.toEntity();
   }
+
+  @override
+  Future<List<User>> getFollowers(String username) async{
+    return await remoteGithubDataSource.getFollowers(username);
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<User>> getFollowing(String username) async{
+    return await remoteGithubDataSource.getFollowing(username);
+    throw UnimplementedError();
+  }
 }
+
+

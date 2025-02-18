@@ -4,4 +4,6 @@ abstract class UserRepository{
   Future<List<User>> getUsers(String? location, int page);
   Future<User> getUserDetails(String? login);
   Future<List<User>> searchUsersByUsername(String? username, int page);
+  Future<List<User>> getFollowers(String username);
+  Future<List<User>> getFollowing(String username);
 }

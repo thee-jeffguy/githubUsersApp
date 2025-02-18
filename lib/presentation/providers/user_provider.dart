@@ -2,6 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:test_drive/domain/entities/user.dart';
 import 'package:test_drive/domain/usecases/search_by_username_usecase.dart';
 import '../../domain/usecases/get_users_usecase.dart';
+import '../../domain/usecases/get_followers_usecase.dart';
+import '../../domain/usecases/get_following_usecase.dart';
+import 'package:dartz/dartz.dart';
+
 
 class UserProvider extends ChangeNotifier {
   late final GetUsersUsecase getUsersUsecase;
@@ -13,7 +17,7 @@ class UserProvider extends ChangeNotifier {
   bool _hasMore = true;
   bool _isLoading = false;
 
-  UserProvider(this.getUsersUsecase, this.searchUsersByUsernameUsecase);
+  UserProvider(this.getUsersUsecase, this.searchUsersByUsernameUsecase, this.getFollowersUseCase, this.getFollowingUseCase);
 
   List<User> get users => _users;
   bool get isLoadingMore => _isLoadingMore;
@@ -109,4 +113,45 @@ class UserProvider extends ChangeNotifier {
     _currentPage++;
     notifyListeners();
   }
+  final GetFollowersUsecase getFollowersUseCase;
+  final GetFollowingUsecase getFollowingUseCase;
+
+  List<User> _followers = [];
+  List<User> _following = [];
+
+
+  List<User> get followers => _followers;
+  List<User> get following => _following;
+
+  Future<void> fetchFollowers(String username) async {
+    _isLoading = true;
+    notifyListeners();
+
+    Either<String, List<User>> result = (await getFollowersUseCase(username)) as Either<String, List<User>>;
+
+    result.fold(
+          (failure) => _followers = [],
+          (followers) => _followers = followers,
+    );
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> fetchFollowing(String username) async {
+    _isLoading = true;
+    notifyListeners();
+
+    Either<String, List<User>> result = (await getFollowingUseCase(username)) as Either<String, List<User>>;
+
+    result.fold(
+          (failure) => _following = [],
+          (following) => _following = following,
+    );
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
 }
+
